@@ -1,103 +1,217 @@
-import Image from "next/image";
+'use client'
+
+import React, { useState } from 'react'
+import { Sparkles, Download, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ImageUpload } from '@/components/image-upload'
+import { StyleSelector } from '@/components/style-selector'
+import { UploadedFile, AdStyle, GenerationRequest, GenerationResponse } from '@/types'
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null)
+  const [selectedStyle, setSelectedStyle] = useState<AdStyle | null>(null)
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [aspectRatio, setAspectRatio] = useState<'square' | 'landscape' | 'portrait'>('square')
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const canGenerate = selectedFile && (selectedStyle || customPrompt.trim())
+
+  const handleGenerate = async () => {
+    if (!canGenerate) return
+
+    setIsGenerating(true)
+    setError(null)
+    setGeneratedImage(null)
+
+    try {
+      const request: GenerationRequest = {
+        productImage: selectedFile!.preview,
+        aspectRatio,
+        ...(customPrompt.trim() ? { customPrompt } : { style: selectedStyle! })
+      }
+
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(request)
+      })
+
+      const result: GenerationResponse = await response.json()
+
+      if (result.success && result.imageUrl) {
+        setGeneratedImage(result.imageUrl)
+      } else {
+        setError(result.error || 'Failed to generate ad')
+      }
+    } catch (err) {
+      console.error('Generation error:', err)
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const handleDownload = () => {
+    if (!generatedImage) return
+    
+    const link = document.createElement('a')
+    link.href = generatedImage
+    link.download = `generated-ad-${Date.now()}.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const resetGenerator = () => {
+    setSelectedFile(null)
+    setSelectedStyle(null)
+    setCustomPrompt('')
+    setGeneratedImage(null)
+    setError(null)
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-2">
+            <Sparkles className="h-8 w-8 text-blue-600" />
+            AI Ad Generator
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Transform your product photos into stunning advertisements with AI. 
+            Upload your image, choose a style, and let our AI create beautiful marketing content.
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {generatedImage ? (
+          /* Results View */
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Generated Ad</h2>
+                <p className="text-gray-600">Here's your beautiful AI-generated advertisement!</p>
+              </div>
+              
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="lg:w-1/2">
+                  <h3 className="text-lg font-semibold mb-4">Original Product</h3>
+                  <div className="aspect-square rounded-lg overflow-hidden border">
+                    <img 
+                      src={selectedFile?.preview} 
+                      alt="Original product" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+                
+                <div className="lg:w-1/2">
+                  <h3 className="text-lg font-semibold mb-4">Generated Ad</h3>
+                  <div className="aspect-square rounded-lg overflow-hidden border">
+                    <img 
+                      src={generatedImage} 
+                      alt="Generated advertisement" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-center gap-4 mt-8">
+                <Button onClick={handleDownload} className="flex items-center gap-2">
+                  <Download className="h-4 w-4" />
+                  Download Ad
+                </Button>
+                <Button variant="outline" onClick={resetGenerator}>
+                  Create Another
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Generator View */
+          <div className="max-w-6xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Left Column - Image Upload */}
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Your Product</h2>
+                  <p className="text-gray-600">Start by uploading a high-quality photo of your product</p>
+                </div>
+                
+                <ImageUpload 
+                  onFileSelect={setSelectedFile} 
+                  selectedFile={selectedFile} 
+                />
+                
+                {selectedFile && (
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Aspect Ratio
+                    </label>
+                    <div className="flex gap-2">
+                      {(['square', 'landscape', 'portrait'] as const).map((ratio) => (
+                        <Button
+                          key={ratio}
+                          variant={aspectRatio === ratio ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setAspectRatio(ratio)}
+                          className="capitalize"
+                        >
+                          {ratio}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Right Column - Style Selection */}
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <StyleSelector
+                  selectedStyle={selectedStyle}
+                  customPrompt={customPrompt}
+                  onStyleSelect={setSelectedStyle}
+                  onCustomPromptChange={setCustomPrompt}
+                />
+              </div>
+            </div>
+            
+            {/* Generate Button */}
+            <div className="text-center mt-8">
+              <Button
+                onClick={handleGenerate}
+                disabled={!canGenerate || isGenerating}
+                size="lg"
+                className="text-lg px-8 py-4 h-auto"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Generating Your Ad...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    Generate Beautiful Ad
+                  </>
+                )}
+              </Button>
+              
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-800">{error}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }
