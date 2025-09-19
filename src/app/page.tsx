@@ -100,7 +100,7 @@ export default function Home() {
                   <Sparkles className="h-8 w-8 text-white" />
                 </div>
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-3">Your Generated Ad</h2>
-                <p className="text-gray-600 text-lg">Here's your beautiful AI-generated advertisement!</p>
+                <p className="text-gray-600 text-lg">Here&apos;s your beautiful AI-generated advertisement!</p>
               </div>
               
               <div className="grid lg:grid-cols-2 gap-8 mb-8">
