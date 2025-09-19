@@ -64,6 +64,8 @@ export function ImageUpload({ onFileSelect, selectedFile }: ImageUploadProps) {
     if (files && files[0]) {
       handleFile(files[0])
     }
+    // Reset the input value so the same file can be selected again
+    e.target.value = ''
   }
 
   const removeFile = () => {
@@ -110,7 +112,6 @@ export function ImageUpload({ onFileSelect, selectedFile }: ImageUploadProps) {
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => document.getElementById('file-upload')?.click()}
       >
         <input
           id="file-upload"
