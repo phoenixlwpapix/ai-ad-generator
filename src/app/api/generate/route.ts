@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GenerationRequest, GenerationResponse } from '@/types'
 
 const NANO_BANANA_API_KEY = process.env.NANO_BANANA_API_KEY
-const NANO_BANANA_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent
+const NANO_BANANA_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent'
 
 export async function POST(request: NextRequest) {
   try {
