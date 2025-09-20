@@ -17,7 +17,6 @@ export interface GenerationResponse {
   success: boolean
   imageUrl?: string
   error?: string
-  requestId?: string
 }
 
 export interface UploadedFile {
